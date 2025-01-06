@@ -21,7 +21,7 @@ class Workout {
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     this.description = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${
       months[this.date.getMonth()]
-    } ${this.date.getDay()}`;
+    } ${this.date.getDate()}`;
   }
 }
 class Running extends Workout {
@@ -59,7 +59,13 @@ class App {
   #mapZoomLevel = 15;
   #workouts = [];
   constructor() {
+    //get position
+
     this._getPosition();
+    //get local storage
+    this._getLocalstorage();
+    //event handlers
+
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
     containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
@@ -86,6 +92,10 @@ class App {
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(this.#map);
     this.#map.on('click', this._showForm.bind(this));
+    this.#workouts.forEach(work => {
+      this._renderWorkout(work);
+      this._renderWorkoutMarker(work);
+    });
   }
   _showForm(mapE) {
     this.#mapEvent = mapE;
@@ -114,7 +124,7 @@ class App {
     const workout = this.#workouts.find(
       work => work.id === workoutEl.dataset.id
     );
-    console.log(workout);
+    // console.log(workout);
     this.#map.setView(workout.coords, this.#mapZoomLevel, {
       animation: true,
       pan: {
@@ -157,7 +167,7 @@ class App {
       workout = new Cycling([lat, lng], duration, distance, elevation);
     }
     this.#workouts.push(workout);
-    console.log(workout);
+    // console.log(workout);
     //render workout on map as marker
 
     this._renderWorkoutMarker(workout);
@@ -166,6 +176,9 @@ class App {
     this._renderWorkout(workout);
     //clearing fields + hide form
     this._hideForm();
+
+    // setting local storage
+    this._setLocalStorage();
   }
   _renderWorkoutMarker(workout) {
     L.marker(workout.coords)
@@ -230,6 +243,19 @@ class App {
         </li>`;
     }
     form.insertAdjacentHTML('afterend', html);
+  }
+  _setLocalStorage() {
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts));
+  }
+  _getLocalstorage() {
+    const data = JSON.parse(localStorage.getItem('workouts'));
+    if (!data) return;
+    // console.log(data);
+    this.#workouts = data;
+  }
+  reset() {
+    localStorage.removeItem('workouts');
+    location.reload();
   }
 }
 const app = new App();
