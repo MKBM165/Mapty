@@ -56,11 +56,13 @@ class App {
   //private fields
   #map;
   #mapEvent;
+  #mapZoomLevel = 15;
   #workouts = [];
   constructor() {
     this._getPosition();
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
+    containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
   }
   _getPosition() {
     if (navigator.geolocation) {
@@ -106,6 +108,20 @@ class App {
     inputElevation.closest('.form__row').classList.toggle('form__row--hidden');
     inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
   }
+  _moveToPopup(e) {
+    const workoutEl = e.target.closest('.workout');
+    if (!workoutEl) return;
+    const workout = this.#workouts.find(
+      work => work.id === workoutEl.dataset.id
+    );
+    console.log(workout);
+    this.#map.setView(workout.coords, this.#mapZoomLevel, {
+      animation: true,
+      pan: {
+        duration: 1,
+      },
+    });
+  }
   _newWorkout(e) {
     const validInput = (...inputs) => inputs.every(inp => Number.isFinite(inp));
     const allPostive = (...inputs) => inputs.every(inp => inp > 0);
@@ -150,7 +166,6 @@ class App {
     this._renderWorkout(workout);
     //clearing fields + hide form
     this._hideForm();
-    //adding marker
   }
   _renderWorkoutMarker(workout) {
     L.marker(workout.coords)
@@ -171,7 +186,7 @@ class App {
   }
   _renderWorkout(workout) {
     let html = `
-      <li class="workout workout--${workout.type}" data-id="1234567890">
+      <li class="workout workout--${workout.type}" data-id="${workout.id}">
         <h2 class="workout__title">${workout.description}</h2>
         <div class="workout__details">
           <span class="workout__icon">${
